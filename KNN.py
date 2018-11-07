@@ -43,29 +43,42 @@ def stringToInt(data):
         unique = []
         uniqueDict = {}
         if(type(data[col][0]) == str):
-            for row in range(0, len(data[col])):
-                if data[col][row] not in unique:
-                    unique.append(data[col][row])
-                    uniqueDict[data[col][row]] = len(uniqueDict)
-            data[col] = data[col].map(uniqueDict)     
+            # change earns label to 
+            # 0 for under 50k
+            # 1 for overr 50k
+            if(data[col].name == "earns"):
+                for row in range(0, len(data[col])):
+                    if data[col][row] == "<=50k":
+                        data.loc[row, col] = 1
+                    else:
+                        data.loc[row, col] = 0
+            #for all else give value from range its in
+            else:
+                for row in range(0, len(data[col])):
+                    if data[col][row] not in unique:
+                        unique.append(data[col][row])
+                        uniqueDict[data[col][row]] = len(uniqueDict)
+                data[col] = data[col].map(uniqueDict)     
     print("stringToInt complete")
     return data
 
-
-#need to ignore lable col and fold column some how
 def minMaxNormalisation(data):
-    for col in data:
-        min = data[col].min()
-        max = data[col].max()
-        print(col + "/ 14")
-        for row in range(0, data[col].size):
-            value = data[col].iloc[row]
+    rows, columns = data.shape
+    #ignore last two columns as they are the label and fold
+    for col in range(0,columns-2):    
+        min = data.iloc[:,col].min()
+        max = data.iloc[:,col].max()
+        #progress marker
+        print(str(col) + "/" + str(columns-2))
+        for row in range(0,rows):
+            value = data.iloc[row, col]
             minMax = (value - min) / (max - min)
-            data[col].iloc[row] = minMax
-    print("finished normalisation")
+            data.iloc[row, col] = minMax
+    #finish messages
+    print(str(columns-2)+"/"+str(columns-2))
+    print("finished Normalisation")
     data.to_csv("min-max.csv")
-    return data.copy()
-
+    return data
 
 def createDistances(data):
     rows, columns = data.shape
@@ -100,22 +113,22 @@ def createDistances(data):
 
 def main():
     #import csv adult data set
-    col_names = ['age', 'work_class', 'fnlwgt', 'education', 'education_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income']
+    #col_names = ['age', 'work_class', 'fnlwgt', 'education', 'education_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income']
 
-    data = pd.read_csv("adult.data.small.csv",names=col_names,header=None)
+    data = pd.read_csv("dataSet/adult.train.small.csv")
     data = cleanDataFrame(data)
     data = stringToInt(data)
     data = minMaxNormalisation(data)
     #returns 0 for earning over 50k
     #and 1 for under 50k
-    data = createDistances(data)
+    #data = createDistances(data)
 #    data = addFoldPoints(data, 5)
     data.to_csv("distance.csv")
 
 
     return data
 
-datatest = pd.read_csv('adult.data.messing.csv')
+datatest = pd.read_csv("dataSet/adult.train.small.csv")
 print("hello, I have started at")
 startTime = time.asctime( time.localtime(time.time()) )
 print(startTime)
