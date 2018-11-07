@@ -5,6 +5,7 @@
 
 import pandas as pd
 import numpy as np
+import time
 
 
 
@@ -21,7 +22,7 @@ def addFoldPoints(data, amountOfCuts):
 
     for i in range(0,np.size(data,0)):
         if(i<=count):
-            data.iloc[i,15] = foldPoint
+            data.iloc[i,columns] = foldPoint
             if(i == count):
                 count = count + segment
                 foldPoint += 1
@@ -78,41 +79,80 @@ def minMaxNormalisation(data):
     data.to_csv("min-max.csv")
     return data.copy()
 
+#this one works
+#def createDistances(data):
+#    rows, columns = data.shape
+#    data[str(columns)] = ""
+#    #compare every row to every row as tuples
+#    for i in data.itertuples():
+##        print(i)
+#        distanceMatrix = np.zeros(shape = (rows,2))
+#        for j in data.itertuples():
+#            #check the index of the rows is not the same
+#            distArray = np.zeros(len(i)-2)
+#            if i[0] != j[0]:
+#                for x in range(1,len(i)-2):
+##                    print(i[x])
+#                    #difference between two feilds squared
+#                    distArray[x] = (i[x]-j[x])**2
+#                #sum all the distances then square root
+#                distanceSum = distArray.sum()
+##                print(distanceSum)
+#                distSqrt = np.sqrt(distanceSum)
+##                print(distSqrt)
+#                #array of index and distance from feild
+#                distance = [j[0], distSqrt]
+#                distanceMatrix[j[0]] = distance
+#                
+#        print("------------")
+#        print("columns " + str(columns))
+#        print("index " + str(i[0]) )
+#        print(data.shape)
+#        print(str(type(distanceMatrix)))
+#        print(distanceMatrix)
+#        data.iloc[i[0], columns] = [distanceMatrix]
+#    return data
+
 def createDistances(data):
     rows, columns = data.shape
     data[str(columns)] = ""
     #compare every row to every row as tuples
     for i in data.itertuples():
-#        print(i)
         distanceMatrix = np.zeros(shape = (rows,2))
         for j in data.itertuples():
-            #check the index of the rows is not the same
             distArray = np.zeros(len(i)-2)
+            #check the index of the rows is not the same
             if i[0] != j[0]:
                 for x in range(1,len(i)-2):
-#                    print(i[x])
                     #difference between two feilds squared
                     distArray[x] = (i[x]-j[x])**2
+            #sum all the distances then square root
+            distanceSum = distArray.sum()
+            distSqrt = np.sqrt(distanceSum)
+            #distance array of index and distance from feild
+            distance = [j[0], distSqrt]
+            distanceMatrix[j[0]] = distance
                 
-                #sum all the distances then square root
-                distanceSum = distArray.sum()
-#                print(distanceSum)
-                distSqrt = np.sqrt(distanceSum)
-#                print(distSqrt)
-                #array of index and distance from feild
-                distance = [j[0], distSqrt]
-                distanceMatrix[j[0]] = distance
-                
-        print("------------")
-        print("columns " + str(columns))
-        print("index " + str(i[0]) )
-        print(data.shape)
-        print(str(type(distanceMatrix)))
-        print(distanceMatrix)
-        data.iloc[i[0], columns] = [distanceMatrix]
-    return data
-
+#        print("------------")
+#        print("columns " + str(columns))
+#        print("index " + str(i[0]) )
+#        print(data.shape)
+#        print(str(type(distanceMatrix)))
         
+#        print(i[0])
+        #set distance to self as negative number
+        distanceMatrix[i[0]] = [i[0], -1] 
+#        print(distanceMatrix)
+#        print("----------")
+        #sort closest distance is nearest
+        #distanceMatrix.sort(0)
+        distanceMatrix = distanceMatrix[distanceMatrix[:, 1].argsort()]
+#        print(distanceMatrix)
+#        print(str(type(distanceMatrix)))
+        #store distacnce matrix in df
+        data.iloc[i[0], columns] = [distanceMatrix]
+        
+    return data
 
         
         
@@ -122,23 +162,30 @@ def main():
 #    col_names = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14']
     col_names = ['age', 'work_class', 'fnlwgt', 'education', 'education_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income']
 
-    data = pd.read_csv('adult.data.small.csv',names=col_names,
-                   header=None)
+    data = pd.read_csv("dataSet/adult.data.csv",names=col_names,header=None)
     data = cleanDataFrame(data)
     data = stringToInt(data)
     data = minMaxNormalisation(data)
     #returns 0 for earning over 50k
     #and 1 for under 50k
     data = createDistances(data)
-    
-    #data = addFoldPoints(data, 5)
+    data = addFoldPoints(data, 5)
+    data.to_csv("distance.csv")
+
 
     return data
 
 datatest = pd.read_csv('adult.data.messing.csv')
+print("hello, I have started at")
+startTime = time.asctime( time.localtime(time.time()) )
+print(startTime)
+print("----------")
 data = main()
 
-
+finishTime = time.asctime( time.localtime(time.time()) )
+print("-----------")
+print("Started at: " + startTime)
+print("Finished at: " + finishTime)
 #dataTest = normaliseCol("0", data)
 
 #def normaliseGender(data):
